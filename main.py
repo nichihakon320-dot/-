@@ -41,5 +41,5 @@ def keep_alive():
 keep_alive()
 
 # ⚠️ 注意：トークンの前後の " は消さないでくれよ！
-bot.run("ここにトークンを貼り付け")
+bot.run("MTUwMDg0NzYyNTg0MTQxMDIxOQ.GfNy8w.pw5mPsUrka0-mfHCqkFU5xTvOnp4y95bjfx9iI")
 
