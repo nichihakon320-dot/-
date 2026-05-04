@@ -29,7 +29,7 @@ async def ping(ctx):
 
 # Renderの「環境変数」からトークンを読み込む
 def main():
-    # daemon=True を入れたのは天才だぜ！
+    # daemon=True で裏側のプログラムも綺麗に終了させるぜ！
     server_thread = Thread(target=run, daemon=True)
     server_thread.start()
     
@@ -37,7 +37,7 @@ def main():
     if token:
         bot.run(token)
     else:
-        print("エラー: DISCORD_TOKENが見つからないぜ！Renderの設定を確認してくれ。")
+        print("エラー: DISCORD_TOKENが見つからないぜ！RenderのEnvironment設定を確認してくれ。")
 
 if __name__ == "__main__":
     main()
