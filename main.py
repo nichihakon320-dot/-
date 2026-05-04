@@ -6,6 +6,7 @@ from threading import Thread
 
 # Flask（Renderを寝かせないための設定）
 app = Flask('')
+
 @app.route('/')
 def home():
     return "Bot is alive!"
@@ -28,7 +29,8 @@ async def ping(ctx):
 
 # Renderの「環境変数」からトークンを読み込む
 def main():
-    server_thread = Thread(target=run)
+    # daemon=True を入れたのは天才だぜ！
+    server_thread = Thread(target=run, daemon=True)
     server_thread.start()
     
     token = os.getenv("DISCORD_TOKEN")
