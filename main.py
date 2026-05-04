@@ -41,5 +41,10 @@ def keep_alive():
 keep_alive()
 
 # ⚠️ 注意：トークンの前後の " は消さないでくれよ！
-bot.run("ここに書いて")
+import os
+
+# 一番下の bot.run をこれに変える！
+token = os.getenv("DISCORD_TOKEN")
+bot.run(token)
+
 
