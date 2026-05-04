@@ -4,47 +4,38 @@ import os
 from flask import Flask
 from threading import Thread
 
-# 1. ボットの権限設定
-intents = discord.Intents.default()
-intents.message_content = True 
-bot = commands.Bot(command_prefix="!", intents=intents)
-
-# 起動確認用
-@bot.event
-async def on_ready():
-    print(f'ログイン成功！: {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name="稼働中だぜ！"))
-
-# 動作確認コマンド
-@bot.command()
-async def ping(ctx):
-    await ctx.send('ポン！動いてるぜ、相棒！')
-
-# 2. Render用のダミーサーバー（24時間稼働に必要）
+# Flask（Renderを寝かせないための設定）
 app = Flask('')
-
 @app.route('/')
 def home():
     return "Bot is alive!"
 
 def run():
-    # Renderは環境変数PORTを指定してくることがあるから、それに対応させてるぜ
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=8080)
 
-def keep_alive():
-    t = Thread(target=run)
-    t.daemon = True # メインプログラムが終了した時に一緒に終了させる設定
-    t.start()
+# Discordボットの設定
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
-# 3. 実行！
-keep_alive()
+@bot.event
+async def on_ready():
+    print(f'ログイン成功！: {bot.user.name}')
 
-# ⚠️ 注意：トークンの前後の " は消さないでくれよ！
-import os
+@bot.command()
+async def ping(ctx):
+    await ctx.send('ポン！動いてるぜ、相棒！')
 
-# 一番下の bot.run をこれに変える！
-token = os.getenv("DISCORD_TOKEN")
-bot.run(token)
+# Renderの「環境変数」からトークンを読み込む
+def main():
+    server_thread = Thread(target=run)
+    server_thread.start()
+    
+    token = os.getenv("DISCORD_TOKEN")
+    if token:
+        bot.run(token)
+    else:
+        print("エラー: DISCORD_TOKENが見つからないぜ！Renderの設定を確認してくれ。")
 
-
+if __name__ == "__main__":
+    main()
