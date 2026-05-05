@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 import os
+import sys
+import traceback
 from flask import Flask
 from threading import Thread
-import sys
 
-# Flask（Renderを寝かせないための設定）
+# Renderのポート設定を自動に合わせるように修正！
 app = Flask(__name__)
 
 @app.route('/')
@@ -13,7 +14,9 @@ def home():
     return "Bot is alive!"
 
 def run():
-    app.run(host='0.0.0.0', port=8080)
+    # Renderが指定するポート（または8080）で待機するぜ
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # Discordボットの設定
 intents = discord.Intents.default()
@@ -22,35 +25,34 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'ログイン成功！: {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name='!ping'))
+    print(f'✅ ログイン成功！: {bot.user.name}')
 
 @bot.command()
 async def ping(ctx):
     await ctx.send('ポン！動いてるぜ、相棒！')
 
-# Renderの「環境変数」からトークンを読み込む
 def main():
+    # サーバーを裏で動かす
+    server_thread = Thread(target=run, daemon=True)
+    server_thread.start()
+    
     token = os.getenv("DISCORD_TOKEN")
     
+    # トークンが設定されていない場合
     if not token:
-        print("エラー: DISCORD_TOKENが見つかりません！")
-        print("Render のEnvironment設定を確認してください。")
+        print("❌【エラー】DISCORD_TOKENが見つからないぜ！RenderのEnvironment設定を見直してくれ。")
         sys.exit(1)
-    
-    # daemon=True で裏側のプログラムも綺麗に終了させる
-    try:
-        server_thread = Thread(target=run, daemon=True)
-        server_thread.start()
-        print("Flask サーバーを起動しました")
-    except Exception as e:
-        print(f"Flask サーバー起動エラー: {e}")
-    
+        
+    # ここからが最強のエラーキャッチだ！
     try:
         bot.run(token)
+    except discord.errors.LoginFailure:
+        print("❌【エラー】トークンが間違っているか、Discord側に無効化されてるぜ！もう一度ポータルでReset Tokenだ！")
+    except discord.errors.PrivilegedIntentsRequired:
+        print("❌【エラー】Discordポータルの『MESSAGE CONTENT INTENT』がOFFになってるぜ！ONにして保存してくれ！")
     except Exception as e:
-        print(f"ボット起動エラー: {e}")
-        sys.exit(1)
+        print("❌【予期せぬエラーが発生したぜ！】")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
