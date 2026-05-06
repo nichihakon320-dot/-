@@ -1,53 +1,41 @@
 import discord
-from discord.ext import commands
+import random
 import os
 from flask import Flask
 from threading import Thread
-import sys
 
-# --- Renderでボットを永続化するための設定 ---
+# --- 【Render専用装備】サーバーを眠らせないための設定 ---
 app = Flask(__name__)
-
 @app.route('/')
-def home():
-    return "Bot is alive!"
+def home(): return "Bot is alive!"
 
 def run():
-    # Renderのポートを自動取得
+    # Renderが指定する窓口(ポート)を自動で使う
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-# --- Discordボットの本体設定 ---
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+# --- 【記事のコード】ボットのメイン機能 ---
+intents = discord.Intents.all()
+client = discord.Client(intents=intents)
 
-@bot.event
+@client.event
 async def on_ready():
-    print(f'✅ ログイン成功！: {bot.user.name}', flush=True)
+    print("Ready! オンラインになったぜ！")
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send('ポン！生きてるぜ、相棒！')
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+    if client.user in message.mentions:
+        answer_list = ["さすがですね！", "知らなかったです！"]
+        answer = random.choice(answer_list)
+        await message.channel.send(answer)
 
 # --- 実行部分 ---
-def main():
-    # 裏側でWebサーバーを動かす
+if __name__ == "__main__":
+    # Renderで動かすためにWebサーバーを裏で起動
     Thread(target=run, daemon=True).start()
     
-    # RenderのEnvironment設定からトークンを読み込む
+    # トークンはRenderの「Environment」から読み込む
     token = os.getenv("DISCORD_TOKEN")
-    
-    if not token:
-        print("❌ エラー: DISCORD_TOKENが設定されてないぜ！", flush=True)
-        sys.exit(1)
-        
-    try:
-        print("🤖 ボットを起動中...", flush=True)
-        bot.run(token)
-    except Exception as e:
-        print(f"❌ 起動失敗: {e}", flush=True)
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+    client.run(token)
