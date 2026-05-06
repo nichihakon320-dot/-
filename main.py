@@ -1,41 +1,41 @@
 import discord
-import random
 import os
 from flask import Flask
 from threading import Thread
 
-# --- 【Render専用装備】サーバーを眠らせないための設定 ---
+# --- 1. ポート待機問題の対策 (Flask) ---
 app = Flask(__name__)
-@app.route('/')
-def home(): return "Bot is alive!"
 
-def run():
-    # Renderが指定する窓口(ポート)を自動で使う
+@app.route('/')
+def home():
+    return "Bot is online!"
+
+def run_flask():
+    # Renderから指定されたポート、なければ5000（または8080）で待機
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-# --- 【記事のコード】ボットのメイン機能 ---
+# --- 2. Discordボットの設定 ---
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print("Ready! オンラインになったぜ！")
+    print(f"✅ Ready! {client.user} がオンラインになったぜ！", flush=True)
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    if client.user in message.mentions:
-        answer_list = ["さすがですね！", "知らなかったです！"]
-        answer = random.choice(answer_list)
-        await message.channel.send(answer)
-
-# --- 実行部分 ---
-if __name__ == "__main__":
-    # Renderで動かすためにWebサーバーを裏で起動
-    Thread(target=run, daemon=True).start()
+# --- 3. 実行部分（ここが心臓部だ！） ---
+def main():
+    # Flaskを別スレッドで起動して、ポート待機問題をクリアする
+    t = Thread(target=run_flask)
+    t.daemon = True # メインが死んだら一緒に死ぬ設定
+    t.start()
     
-    # トークンはRenderの「Environment」から読み込む
+    # Discordボットを起動
     token = os.getenv("DISCORD_TOKEN")
-    client.run(token)
+    if token:
+        client.run(token)
+    else:
+        print("❌ エラー: トークンが見つからないぜ！")
+
+if __name__ == "__main__":
+    main()
