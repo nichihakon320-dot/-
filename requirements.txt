@@ -2,3 +2,4 @@ discord.py
 uvicorn
 Flask
 gunicorn
+a2wsgi
